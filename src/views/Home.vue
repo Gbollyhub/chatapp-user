@@ -122,6 +122,8 @@ export default {
     }
   },
   created(){
+
+    //loads all users on page load
                    db.collection('users').get().then(
         querySnapshot => {
           querySnapshot.forEach(doc =>{
@@ -136,19 +138,24 @@ export default {
       )
   },
   methods:{
-
+      //generate random Id for users
       generateUserId(){
             var text = "";
      var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
    
      for (var i = 0; i < 8; i++)
        text += possible.charAt(Math.floor(Math.random() * possible.length));
+       //save userid as generated id
        this.user.id = text;
         },
 
+
+         //user registration method
         register(e){
             e.preventDefault();
+            //calls the generate id method
            this.generateUserId()
+           //save the new user in db
             db.collection('users').doc(this.user.id).set({
                 UserId: this.user.id,
                 Fullname: this.user.name,
@@ -158,11 +165,13 @@ export default {
 
         loginAndGetUsers(e){
              e.preventDefault();
+             //clears the friends array
              this.usersFriends = [];
+
+             //looks for the user exists
            db.collection('users').doc(this.loginuser.id).get().then(
        (doc) => {
                      if (doc.exists) {
-        console.log("Document data:", doc.data());
           this.userDetails.id = doc.data().UserId
             this.userDetails.name = doc.data().Fullname
             this.userDetails.phone = doc.data().PhoneNumber
@@ -172,6 +181,7 @@ export default {
         console.log("No such document!");
     }
           }).then(()=>{
+            //if the user exists he loads the contactlist collection
                    db.collection('users').doc(this.loginuser.id).collection('contactList').get().then(
         querySnapshot => {
           querySnapshot.forEach(doc =>{
@@ -187,18 +197,22 @@ export default {
       }).then(()=>{ this.loginform = true }).catch(error => alert(error)) 
       
         },
+        // Add a friend to contactlist
        async addAFriend(e){
           e.preventDefault();
-         console.log(this.frienduser.id)
 
+           //checks if the friend is a member
           const isFriendAUser = await db.collection('users').doc(this.frienduser.id).get()
 
             if(isFriendAUser.exists){
+              //if friend is a member, checks if he is already a friend
         const getUser = await db.collection('users').doc(this.adderuser.id).collection('contactList').doc(this.frienduser.id).get()
   if( getUser.exists){
+    //if friend is already a friend alert is called
        alert("User Exists as your friend already")
   }
   else{
+    //if friend is not a friend, gets the friends details
            db.collection('users').where('UserId', '==', this.frienduser.id).get().then(
             querySnapshot => {
               querySnapshot.forEach(doc =>{
@@ -208,7 +222,8 @@ export default {
               })
             }
           ).then(()=>{
-                 console.log("gotten Friend" + this.addfriendresult.name)
+
+                 //gets the person adding details also
                   db.collection('users').where('UserId', '==', this.adderuser.id).get().then(
             querySnapshot => {
               querySnapshot.forEach(doc =>{
@@ -218,14 +233,14 @@ export default {
               })
             }
           ).then(()=>{
-            console.log("getten Adder" + this.adderresult.name)
+           //saves the friends details in the contactlist of the person adding
               db.collection('users').doc(this.adderuser.id).collection('contactList').doc(this.addfriendresult.id).set({
                      UserId: this.addfriendresult.id,
                     Fullname: this.addfriendresult.name,
                     PhoneNumber: this.addfriendresult.phone
              })
           }).then(()=>{
-             console.log("Added Adder"+ this.addfriendresult.name)
+             //saves the person adding details also in the friends contactlist
              db.collection('users').doc(this.frienduser.id).collection('contactList').doc(this.adderresult.id).set({
                      UserId: this.adderresult.id,
                     Fullname: this.adderresult.name,
